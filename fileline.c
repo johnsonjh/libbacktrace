@@ -51,7 +51,29 @@ POSSIBILITY OF SUCH DAMAGE.  */
 #include "internal.h"
 
 #ifndef HAVE_GETEXECNAME
+#if defined(__WIN32__) && !defined(__MSYS__) && !defined(__CYGWIN__)
+/*
+ * Windows-specific implementation of getexecname();
+ * MSYS/Cygwin want to fall back to /proc/self/exe instead.
+ */
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
+static inline const char *getexecname(void)
+{
+  static char path[32768]; /* Allow for long paths, i.e. do not use MAX_PATH */
+
+  switch (GetModuleFileNameA(NULL, path, sizeof(path))) {
+  case 0:
+  case sizeof(path):
+    return NULL;
+  }
+
+  return path;
+}
+#else
 #define getexecname() NULL
+#endif
 #endif
 
 #if !defined (HAVE_KERN_PROC_ARGS) && !defined (HAVE_KERN_PROC)

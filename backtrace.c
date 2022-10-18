@@ -96,6 +96,43 @@ unwind (struct _Unwind_Context *context, void *vdata)
   return _URC_NO_REASON;
 }
 
+#if NATIVE_WIN32_STACKTRACE
+static int win32_unwind(struct backtrace_data *bdata)
+{
+  static int initialized;
+  static USHORT (*RtlCaptureStackBackTrace)(ULONG, ULONG, PVOID*, PULONG);
+  void *pcs[62];
+  int i, count;
+
+  if (!initialized) {
+    HMODULE kernel32 =
+      LoadLibraryExW(L"kernel32.dll", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
+    if (kernel32)
+      RtlCaptureStackBackTrace =
+        (void *)GetProcAddress(kernel32, "RtlCaptureStackBackTrace");
+    initialized = 1;
+    if (!RtlCaptureStackBackTrace)
+      return -1;
+  }
+
+  count = RtlCaptureStackBackTrace(2,
+    sizeof(pcs) / sizeof(pcs[0]), pcs, NULL);
+  for (i = 0; i < count; i++) {
+    uintptr_t pc = (uintptr_t)pcs[i];
+
+    if (!bdata->can_alloc)
+      bdata->ret = bdata->callback (bdata->data, pc, NULL, 0, NULL);
+    else
+      bdata->ret = backtrace_pcinfo (bdata->state, pc, bdata->callback,
+                                     bdata->error_callback, bdata->data);
+    if (bdata->ret != 0)
+      return _URC_END_OF_STACK;
+  }
+
+  return _URC_NO_REASON;
+}
+#endif
+
 /* Get a stack backtrace.  */
 
 int __attribute__((noinline))
@@ -124,6 +161,9 @@ backtrace_full (struct backtrace_state *state, int skip,
       bdata.can_alloc = 1;
     }
 
+#if NATIVE_WIN32_STACKTRACE
+  if (win32_unwind(&bdata) < 0)
+#endif
   _Unwind_Backtrace (unwind, &bdata);
   return bdata.ret;
 }

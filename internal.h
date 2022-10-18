@@ -64,6 +64,12 @@ POSSIBILITY OF SUCH DAMAGE.  */
 # endif
 #endif
 
+#if defined(__WIN32__) && !defined(__MSYS__) && !defined(__CYGWIN__)
+#define NATIVE_WIN32_STACKTRACE 1
+#else
+#define NATIVE_WIN32_STACKTRACE 0
+#endif
+
 #ifndef HAVE_SYNC_FUNCTIONS
 
 /* Define out the sync functions.  These should never be called if

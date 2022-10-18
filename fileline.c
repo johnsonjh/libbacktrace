@@ -158,7 +158,7 @@ macho_get_executable_path (struct backtrace_state *state,
 /* Initialize the fileline information from the executable.  Returns 1
    on success, 0 on failure.  */
 
-static int
+int
 fileline_initialize (struct backtrace_state *state,
 		     backtrace_error_callback error_callback, void *data)
 {

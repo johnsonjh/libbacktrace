@@ -555,7 +555,7 @@ elf_crc32_file (struct backtrace_state *state, int descriptor,
 /* A dummy callback function used when we can't find a symbol
    table.  */
 
-static void
+void
 elf_nosyms (struct backtrace_state *state ATTRIBUTE_UNUSED,
 	    uintptr_t addr ATTRIBUTE_UNUSED,
 	    backtrace_syminfo_callback callback ATTRIBUTE_UNUSED,
@@ -756,7 +756,7 @@ elf_add_syminfo_data (struct backtrace_state *state,
 
 /* Return the symbol name and value for an ADDR.  */
 
-static void
+void
 elf_syminfo (struct backtrace_state *state, uintptr_t addr,
 	     backtrace_syminfo_callback callback,
 	     backtrace_error_callback error_callback ATTRIBUTE_UNUSED,
@@ -3986,7 +3986,7 @@ backtrace_uncompress_lzma (struct backtrace_state *state,
    elf_add will need to be called on the descriptor again after
    base_address is determined.  */
 
-static int
+int
 elf_add (struct backtrace_state *state, const char *filename, int descriptor,
 	 const unsigned char *memory, size_t memory_size,
 	 uintptr_t base_address, backtrace_error_callback error_callback,

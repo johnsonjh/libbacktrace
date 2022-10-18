@@ -385,12 +385,15 @@ extern int backtrace_uncompress_lzma (struct backtrace_state *,
 				      unsigned char **uncompressed,
 				      size_t *uncompressed_size);
 
-extern int elf_add (struct backtrace_state *state, const char *filename, int descriptor,
-                    const unsigned char *memory, size_t memory_size,
-                    uintptr_t base_address, backtrace_error_callback error_callback,
-                    void *data, fileline *fileline_fn, int *found_sym, int *found_dwarf,
-                    struct dwarf_data **fileline_entry, int exe, int debuginfo,
-                    const char *with_buildid_data, uint32_t with_buildid_size);
+
+extern int elf_add (struct backtrace_state *state, const char *filename,
+					int descriptor, const unsigned char *memory,
+					size_t memory_size, uintptr_t base_address,
+					backtrace_error_callback error_callback, void *data,
+					fileline *fileline_fn, int *found_sym, int *found_dwarf,
+					struct dwarf_data **fileline_entry, int exe, int debuginfo,
+					const char *with_buildid_data, uint32_t with_buildid_size,
+					const char *binary_filename);
 
 extern void elf_syminfo (struct backtrace_state *state, uintptr_t addr,
                          backtrace_syminfo_callback callback,

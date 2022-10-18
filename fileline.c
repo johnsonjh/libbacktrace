@@ -326,7 +326,9 @@ void
 backtrace_syminfo_to_full_callback (void *data, uintptr_t pc,
 				    const char *symname,
 				    uintptr_t symval ATTRIBUTE_UNUSED,
-				    uintptr_t symsize ATTRIBUTE_UNUSED)
+				    uintptr_t symsize ATTRIBUTE_UNUSED,
+				    const char *binary_filename ATTRIBUTE_UNUSED,
+				    uintptr_t base_address ATTRIBUTE_UNUSED)
 {
   struct backtrace_call_full *bdata = (struct backtrace_call_full *) data;
 

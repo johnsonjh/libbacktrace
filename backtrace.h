@@ -157,15 +157,20 @@ extern int backtrace_pcinfo (struct backtrace_state *state, uintptr_t pc,
 			     void *data);
 
 /* The type of the callback argument to backtrace_syminfo.  DATA and
-   PC are the arguments passed to backtrace_syminfo.  SYMNAME is the
-   name of the symbol for the corresponding code.  SYMVAL is the
-   value and SYMSIZE is the size of the symbol.  SYMNAME will be NULL
-   if no error occurred but the symbol could not be found.  */
+   PC are the arguments passed to backtrace_syminfo.  SYMNAME is the name of
+   the symbol for the corresponding code.  SYMVAL is the value and SYMSIZE is
+   the size of the symbol.  SYMNAME will be NULL if no error occurred but the
+   symbol could not be found. BINARY_FILENAME is the name of the shared object
+   filename or NULL if the symbol was found in the executable itself or the
+   symbol could not be found. BASE_ADDRESS is the base address of the shared
+   object or 0 if the symbol could not be found.*/
 
 typedef void (*backtrace_syminfo_callback) (void *data, uintptr_t pc,
 					    const char *symname,
 					    uintptr_t symval,
-					    uintptr_t symsize);
+					    uintptr_t symsize,
+					    const char* binary_filename,
+					    uintptr_t base_address);
 
 /* Given ADDR, an address or program counter in the current program,
    call the callback information with the symbol name and value

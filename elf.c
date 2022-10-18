@@ -393,6 +393,10 @@ struct elf_syminfo_data
   struct elf_symbol *symbols;
   /* The number of symbols.  */
   size_t count;
+  /* The name of the shared object (see dl_iterate_phdr's dlpi_name) */
+  const char* binary_file_name;
+  /* Base address/offset of the shared object (see dl_iterate_phdr's dlpi_addr) */
+  uintptr_t base_address;
 };
 
 /* A view that works for either a file or memory.  */
@@ -636,7 +640,8 @@ elf_initialize_syminfo (struct backtrace_state *state,
 			const unsigned char *strtab, size_t strtab_size,
 			backtrace_error_callback error_callback,
 			void *data, struct elf_syminfo_data *sdata,
-			struct elf_ppc64_opd_data *opd)
+			struct elf_ppc64_opd_data *opd,
+			const char *binary_filename)
 {
   size_t sym_count;
   const b_elf_sym *sym;
@@ -708,6 +713,8 @@ elf_initialize_syminfo (struct backtrace_state *state,
   sdata->next = NULL;
   sdata->symbols = elf_symbols;
   sdata->count = elf_symbol_count;
+  sdata->binary_file_name = binary_filename;
+  sdata->base_address = base_address;
 
   return 1;
 }
@@ -800,9 +807,9 @@ elf_syminfo (struct backtrace_state *state, uintptr_t addr,
     }
 
   if (sym == NULL)
-    callback (data, addr, NULL, 0, 0);
+    callback(data, addr, NULL, 0, 0, NULL, 0);
   else
-    callback (data, addr, sym->name, sym->address, sym->size);
+    callback(data, addr, sym->name, sym->address, sym->size, edata->binary_file_name, edata->base_address);
 }
 
 /* Return whether FILENAME is a symlink.  */
@@ -3997,7 +4004,7 @@ elf_add (struct backtrace_state *state, const char *filename, int descriptor,
 	 uintptr_t base_address, backtrace_error_callback error_callback,
 	 void *data, fileline *fileline_fn, int *found_sym, int *found_dwarf,
 	 struct dwarf_data **fileline_entry, int exe, int debuginfo,
-	 const char *with_buildid_data, uint32_t with_buildid_size)
+	 const char *with_buildid_data, uint32_t with_buildid_size, const char *binary_filename)
 {
   struct elf_view ehdr_view;
   b_elf_ehdr ehdr;
@@ -4402,7 +4409,7 @@ elf_add (struct backtrace_state *state, const char *filename, int descriptor,
       if (!elf_initialize_syminfo (state, base_address,
 				   symtab_view.view.data, symtab_shdr->sh_size,
 				   strtab_view.view.data, strtab_shdr->sh_size,
-				   error_callback, data, sdata, opd))
+				   error_callback, data, sdata, opd, binary_filename))
 	{
 	  backtrace_free (state, sdata, sizeof *sdata, error_callback, data);
 	  goto fail;
@@ -4443,7 +4450,7 @@ elf_add (struct backtrace_state *state, const char *filename, int descriptor,
 	    elf_release_view (state, &debugaltlink_view, error_callback, data);
 	  ret = elf_add (state, "", d, NULL, 0, base_address, error_callback,
 			 data, fileline_fn, found_sym, found_dwarf, NULL, 0,
-			 1, NULL, 0);
+			 1, NULL, 0, binary_filename);
 	  if (ret < 0)
 	    backtrace_close (d, error_callback, data);
 	  else if (descriptor >= 0)
@@ -4480,7 +4487,7 @@ elf_add (struct backtrace_state *state, const char *filename, int descriptor,
 	    elf_release_view (state, &debugaltlink_view, error_callback, data);
 	  ret = elf_add (state, "", d, NULL, 0, base_address, error_callback,
 			 data, fileline_fn, found_sym, found_dwarf, NULL, 0,
-			 1, NULL, 0);
+			 1, NULL, 0, binary_filename);
 	  if (ret < 0)
 	    backtrace_close (d, error_callback, data);
 	  else if (descriptor >= 0)
@@ -4509,7 +4516,7 @@ elf_add (struct backtrace_state *state, const char *filename, int descriptor,
 	  ret = elf_add (state, filename, d, NULL, 0, base_address,
 			 error_callback, data, fileline_fn, found_sym,
 			 found_dwarf, &fileline_altlink, 0, 1,
-			 debugaltlink_buildid_data, debugaltlink_buildid_size);
+			 debugaltlink_buildid_data, debugaltlink_buildid_size, binary_filename);
 	  elf_release_view (state, &debugaltlink_view, error_callback, data);
 	  debugaltlink_view_valid = 0;
 	  if (ret < 0)
@@ -4545,7 +4552,7 @@ elf_add (struct backtrace_state *state, const char *filename, int descriptor,
 	  ret = elf_add (state, filename, -1, gnu_debugdata_uncompressed,
 			 gnu_debugdata_uncompressed_size, base_address,
 			 error_callback, data, fileline_fn, found_sym,
-			 found_dwarf, NULL, 0, 0, NULL, 0);
+			 found_dwarf, NULL, 0, 0, NULL, 0, binary_filename);
 	  if (ret >= 0 && descriptor >= 0)
 	    backtrace_close(descriptor, error_callback, data);
 	  return ret;
@@ -4857,7 +4864,7 @@ phdr_callback (struct dl_phdr_info *info, size_t size ATTRIBUTE_UNUSED,
 
   if (elf_add (pd->state, filename, descriptor, NULL, 0, info->dlpi_addr,
 	       pd->error_callback, pd->data, &elf_fileline_fn, pd->found_sym,
-	       &found_dwarf, NULL, 0, 0, NULL, 0))
+	       &found_dwarf, NULL, 0, 0, NULL, 0, info->dlpi_name))
     {
       if (found_dwarf)
 	{
@@ -4886,7 +4893,7 @@ backtrace_initialize (struct backtrace_state *state, const char *filename,
 
   ret = elf_add (state, filename, descriptor, NULL, 0, 0, error_callback, data,
 		 &elf_fileline_fn, &found_sym, &found_dwarf, NULL, 1, 0, NULL,
-		 0);
+		 0, NULL);
   if (!ret)
     return 0;
 

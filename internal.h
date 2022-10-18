@@ -351,7 +351,9 @@ struct backtrace_call_full
 extern void backtrace_syminfo_to_full_callback (void *data, uintptr_t pc,
 						const char *symname,
 						uintptr_t symval,
-						uintptr_t symsize);
+						uintptr_t symsize,
+						const char * binary_filename,
+						uintptr_t base_address);
 
 /* An error callback that corresponds to
    backtrace_syminfo_to_full_callback.  */

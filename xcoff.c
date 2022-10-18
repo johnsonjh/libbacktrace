@@ -547,14 +547,14 @@ xcoff_syminfo (struct backtrace_state *state ATTRIBUTE_UNUSED, uintptr_t addr,
     }
 
   if (sym == NULL)
-    callback (data, addr, NULL, 0, 0);
+    callback(data, addr, NULL, 0, 0, NULL, 0);
   else
     {
       name = sym->name;
       /* AIX prepends a '.' to function entry points, remove it.  */
       if (name && *name == '.')
 	++name;
-      callback (data, addr, name, sym->address, sym->size);
+      callback(data, addr, sym->name, sym->address, sym->size, NULL, 0);
     }
 }
 

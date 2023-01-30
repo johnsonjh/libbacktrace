@@ -250,6 +250,7 @@ check_DATA += allocfail.dSYM
 endif USE_DSYMUTIL
 
 if HAVE_ELF
+if HAVE_BUILDID
 if HAVE_OBJCOPY_DEBUGLINK
 
 b2test_SOURCES = $(btest_SOURCES)
@@ -273,6 +274,7 @@ MAKETESTS += b3test_dwz_buildid
 endif HAVE_DWZ
 
 endif HAVE_OBJCOPY_DEBUGLINK
+endif HAVE_BUILDID
 endif HAVE_ELF
 
 btest_SOURCES = btest.c testlib.c
@@ -374,6 +376,25 @@ ztest_alloc_CFLAGS = $(ztest_CFLAGS)
 
 BUILDTESTS += ztest_alloc
 
+zstdtest_SOURCES = zstdtest.c testlib.c
+zstdtest_CFLAGS = $(libbacktrace_TEST_CFLAGS) -DSRCDIR=\"$(srcdir)\"
+zstdtest_LDADD = libbacktrace.la
+zstdtest_alloc_LDADD = libbacktrace_alloc.la
+
+if HAVE_ZSTD
+zstdtest_LDADD += -lzstd
+zstdtest_alloc_LDADD += -lzstd
+endif
+zstdtest_LDADD += $(CLOCK_GETTIME_LINK)
+zstdtest_alloc_LDADD += $(CLOCK_GETTIME_LINK)
+
+BUILDTESTS += zstdtest
+
+zstdtest_alloc_SOURCES = $(zstdtest_SOURCES)
+zstdtest_alloc_CFLAGS = $(zstdtest_CFLAGS)
+
+BUILDTESTS += zstdtest_alloc
+
 endif HAVE_ELF
 
 edtest_SOURCES = edtest.c edtest2_build.c testlib.c
@@ -457,6 +478,17 @@ ctesta_LDFLAGS = -Wl,--compress-debug-sections=zlib-gabi -static
 ctesta_LDADD = libbacktrace.la
 
 BUILDTESTS += ctestg ctesta
+
+if HAVE_COMPRESSED_DEBUG_ZSTD
+
+ctestzstd_SOURCES = btest.c testlib.c
+ctestzstd_CFLAGS = $(libbacktrace_TEST_CFLAGS)
+ctestzstd_LDFLAGS = -Wl,--compress-debug-sections=zstd
+ctestzstd_LDADD = libbacktrace.la
+
+BUILDTESTS += ctestzstd
+
+endif
 
 ctestg_alloc_SOURCES = $(ctestg_SOURCES)
 ctestg_alloc_CFLAGS = $(ctestg_CFLAGS)

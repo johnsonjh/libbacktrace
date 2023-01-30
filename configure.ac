@@ -481,7 +481,18 @@ AC_CHECK_LIB([z], [compress],
     [AC_DEFINE(HAVE_ZLIB, 1, [Define if -lz is available.])])
 AM_CONDITIONAL(HAVE_ZLIB, test "$ac_cv_lib_z_compress" = yes)
 
-dnl Test whether the linker supports the --compress_debug_sections option.
+dnl Test whether the linker supports the --build-id option.
+AC_CACHE_CHECK([whether --build-id is supported],
+[libbacktrace_cv_ld_buildid],
+[LDFLAGS_hold=$LDFLAGS
+LDFLAGS="$LDFLAGS -Wl,--build-id"
+AC_LINK_IFELSE([AC_LANG_PROGRAM(,)],
+[libbacktrace_cv_ld_buildid=yes],
+[libbacktrace_cv_ld_buildid=no])
+LDFLAGS=$LDFLAGS_hold])
+AM_CONDITIONAL(HAVE_BUILDID, test "$libbacktrace_cv_ld_buildid" = yes)
+
+dnl Test whether the linker supports the --compress-debug-sections option.
 AC_CACHE_CHECK([whether --compress-debug-sections is supported],
 [libgo_cv_ld_compress],
 [LDFLAGS_hold=$LDFLAGS
@@ -491,6 +502,21 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM(,)],
 [libgo_cv_ld_compress=no])
 LDFLAGS=$LDFLAGS_hold])
 AM_CONDITIONAL(HAVE_COMPRESSED_DEBUG, test "$libgo_cv_ld_compress" = yes)
+
+AC_CHECK_LIB([zstd], [ZSTD_compress],
+    [AC_DEFINE(HAVE_ZSTD, 1, [Define if -lzstd is available.])])
+AM_CONDITIONAL(HAVE_ZSTD, test "$ac_cv_lib_zstd_ZSTD_compress" = yes)
+
+dnl Test whether the linker supports --compress-debug-sections=zstd option.
+AC_CACHE_CHECK([whether --compress-debug-sections=zstd is supported],
+[libgo_cv_ld_compress_zstd],
+[LDFLAGS_hold=$LDFLAGS
+LDFLAGS="$LDFLAGS -Wl,--compress-debug-sections=zstd"
+AC_LINK_IFELSE([AC_LANG_PROGRAM(,)],
+[libgo_cv_ld_compress_zstd=yes],
+[libgo_cv_ld_compress_zstd=no])
+LDFLAGS=$LDFLAGS_hold])
+AM_CONDITIONAL(HAVE_COMPRESSED_DEBUG_ZSTD, test "$libgo_cv_ld_compress_zstd" = yes)
 
 AC_ARG_VAR(OBJCOPY, [location of objcopy])
 AC_CHECK_PROG(OBJCOPY, objcopy, objcopy,)

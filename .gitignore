@@ -3,3 +3,4 @@
 *.lo
 *.a
 *.la
+autom4te.cache/
